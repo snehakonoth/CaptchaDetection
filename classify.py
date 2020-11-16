@@ -76,7 +76,8 @@ def main():
             # load image and preprocess it
             raw_data = cv2.imread(os.path.join(args.captcha_dir, x))
             rgb_data = cv2.cvtColor(raw_data, cv2.COLOR_BGR2RGB)
-            image = numpy.array(rgb_data) / 255.0
+            image = numpy.array(rgb_data, dtype=numpy.float32) / 255.0
+            #image = numpy.array(rgb_data) / 255.0
             (c, h, w) = image.shape
             image = image.reshape([-1, c, h, w])
             #prediction = model.predict(image)
