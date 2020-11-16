@@ -19,10 +19,10 @@ def decode(characters, y):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model-name', help='Model name to use for classification', type=str, default='captcha-detection')
-    parser.add_argument('--captcha-dir', help='Where to read the captchas to break', type=str, default='konoths-project1')
-    parser.add_argument('--output', help='File where the classifications should be saved', type=str, default='konoths-projects-output')
-    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str, default='symbols.txt')
+    parser.add_argument('--model-name', help='Model name to use for classification', type=str)
+    parser.add_argument('--captcha-dir', help='Where to read the captchas to break', type=str)
+    parser.add_argument('--output', help='File where the classifications should be saved', type=str)
+    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str)
     args = parser.parse_args()
 
     if args.model_name is None:
@@ -46,8 +46,7 @@ def main():
     symbols_file.close()
 
     print("Classifying captchas with symbol set {" + captcha_symbols + "}")
-
-    with tf.device('/cpu:0'):
+    with tf.device('/gpu:0'):
         with open(args.output, 'w') as output_file:
             json_file = open(args.model_name+'.json', 'r')
             loaded_model_json = json_file.read()
@@ -57,6 +56,13 @@ def main():
             model.compile(loss='categorical_crossentropy',
                           optimizer=keras.optimizers.Adam(1e-3, amsgrad=True),
                           metrics=['accuracy'])
+            
+            converter = tf.lite.TFLiteConverter.from_keras_model(model)
+            tflite_model = converter.convert()
+            
+            # Save the model.
+            with open('model.tflite', 'wb') as f:
+              f.write(tflite_model)
 
             for x in os.listdir(args.captcha_dir):
                 # load image and preprocess it
@@ -66,9 +72,28 @@ def main():
                 (c, h, w) = image.shape
                 image = image.reshape([-1, c, h, w])
                 prediction = model.predict(image)
-                output_file.write(x + "," + decode(captcha_symbols, prediction) + "\n")
-
+                decoded_symbol = decode(captcha_symbols, prediction)
+                decoded_symbol = decoded_symbol.replace('1', '<')
+                decoded_symbol = decoded_symbol.replace('2', '>')
+                decoded_symbol = decoded_symbol.replace('3', '*')
+                decoded_symbol = decoded_symbol.replace('4', '?')
+                decoded_symbol = decoded_symbol.replace('5', '/')
+                decoded_symbol = decoded_symbol.replace('6', '\\')
+                decoded_symbol = decoded_symbol.replace('7', '|')
+                decoded_symbol = decoded_symbol.replace('8', ':')
+                decoded_symbol = decoded_symbol.replace('9', '\"')
+                decoded_symbol = decoded_symbol.replace(' ', '')
+                output_file.write(x + "," + decoded_symbol + "\n")
+                
                 print('Classified ' + x)
 
+            #with open(args.output, 'rb') as output_file:
+            #    content = output_file.read()
+
+            #content = content.replace(b'\r\n', b'\n')
+
+            #with open(args.output, 'wb') as output_file:
+            #    output_file.write(content)
+                
 if __name__ == '__main__':
     main()

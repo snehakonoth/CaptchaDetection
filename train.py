@@ -72,6 +72,15 @@ class ImageSequence(keras.utils.Sequence):
                 processed_data = numpy.array(rgb_data) / 255.0
                 X[i] = processed_data
     
+                random_image_label = random_image_label.replace('1', '<')
+                random_image_label = random_image_label.replace('2', '>')
+                random_image_label = random_image_label.replace('3', '*')
+                random_image_label = random_image_label.replace('4', '?')
+                random_image_label = random_image_label.replace('5', '/')
+                random_image_label = random_image_label.replace('6', '\\')
+                random_image_label = random_image_label.replace('7', '|')
+                random_image_label = random_image_label.replace('8', ':')
+                random_image_label = random_image_label.replace('9', '\"')
                 # We have a little hack here - we save captchas as TEXT_num.png if there is more than one captcha with the text "TEXT"
                 # So the real label should have the "_num" stripped out.
     
@@ -85,16 +94,16 @@ class ImageSequence(keras.utils.Sequence):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--width', help='Width of captcha image', type=int, default=128)
-    parser.add_argument('--height', help='Height of captcha image', type=int, default=64)
-    parser.add_argument('--length', help='Length of captchas in characters', type=int, default=5)
-    parser.add_argument('--batch-size', help='How many images in training captcha batches', type=int, default=100)
-    parser.add_argument('--train-dataset', help='Where to look for the training image dataset', type=str, default='konoths-projects-train-dataset')
-    parser.add_argument('--validate-dataset', help='Where to look for the validation image dataset', type=str, default='konoths-projects-validation-dataset')
-    parser.add_argument('--output-model-name', help='Where to save the trained model', type=str, default='captcha-detection')
+    parser.add_argument('--width', help='Width of captcha image', type=int)
+    parser.add_argument('--height', help='Height of captcha image', type=int)
+    parser.add_argument('--length', help='Length of captchas in characters', type=int)
+    parser.add_argument('--batch-size', help='How many images in training captcha batches', type=int)
+    parser.add_argument('--train-dataset', help='Where to look for the training image dataset', type=str)
+    parser.add_argument('--validate-dataset', help='Where to look for the validation image dataset', type=str)
+    parser.add_argument('--output-model-name', help='Where to save the trained model', type=str)
     parser.add_argument('--input-model', help='Where to look for the input model to continue training', type=str)
-    parser.add_argument('--epochs', help='How many training epochs to run', type=int, default=10)
-    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str, default='symbols.txt')
+    parser.add_argument('--epochs', help='How many training epochs to run', type=int)
+    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str)
     args = parser.parse_args()
 
     if args.width is None:
@@ -137,12 +146,12 @@ def main():
     with open(args.symbols) as symbols_file:
         captcha_symbols = symbols_file.readline()
 
-    # physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    # assert len(physical_devices) > 0, "No GPU available!"
+    physical_devices = tf.config.experimental.list_physical_devices('GPU')
+    assert len(physical_devices) > 0, "No GPU available!"
     # tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     # with tf.device('/device:GPU:0'):
-    with tf.device('/device:CPU:0'):
+    with tf.device('/device:GPU:0'):
     # with tf.device('/device:XLA_CPU:0'):
         model = create_model(args.length, len(captcha_symbols), (args.height, args.width, 3))
         

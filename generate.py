@@ -10,12 +10,12 @@ import captcha.image
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--width', help='Width of captcha image', type=int, default=128)
-    parser.add_argument('--height', help='Height of captcha image', type=int, default=64)
-    parser.add_argument('--length', help='Length of captchas in characters', type=int, default=5)
-    parser.add_argument('--count', help='How many captchas to generate', type=int, default=1000)
-    parser.add_argument('--output-dir', help='Where to store the generated captchas', type=str, default='konoths-projects-train-dataset')
-    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str, default='symbols.txt')
+    parser.add_argument('--width', help='Width of captcha image', type=int)
+    parser.add_argument('--height', help='Height of captcha image', type=int)
+    parser.add_argument('--length', help='Length of captchas in characters', type=int)
+    parser.add_argument('--count', help='How many captchas to generate', type=int)
+    parser.add_argument('--output-dir', help='Where to store the generated captchas', type=str)
+    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str)
     args = parser.parse_args()
 
     if args.width is None:
@@ -47,7 +47,6 @@ def main():
     symbols_file = open(args.symbols, 'r')
     captcha_symbols = symbols_file.readline().strip()
     symbols_file.close()
-
     print("Generating captchas with symbol set {" + captcha_symbols + "}")
 
     if not os.path.exists(args.output_dir):
@@ -56,12 +55,22 @@ def main():
 
     for i in range(args.count):
         random_str = ''.join([random.choice(captcha_symbols) for j in range(args.length)])
-        image_path = os.path.join(args.output_dir, random_str+'.png')
+        image_name = random_str
+        image_name = image_name.replace('<', '1')
+        image_name = image_name.replace('>', '2')
+        image_name = image_name.replace('*', '3')
+        image_name = image_name.replace('?', '4')
+        image_name = image_name.replace('/', '5')
+        image_name = image_name.replace('\\', '6')
+        image_name = image_name.replace('|', '7')
+        image_name = image_name.replace(':', '8')
+        image_name = image_name.replace('\"', '9')
+        image_path = os.path.join(args.output_dir, image_name+'.png')
         if os.path.exists(image_path):
             version = 1
-            while os.path.exists(os.path.join(args.output_dir, random_str + '_' + str(version) + '.png')):
+            while os.path.exists(os.path.join(args.output_dir, image_name + '_' + str(version) + '.png')):
                 version += 1
-            image_path = os.path.join(args.output_dir, random_str + '_' + str(version) + '.png')
+            image_path = os.path.join(args.output_dir, image_name + '_' + str(version) + '.png')
 
         image = numpy.array(captcha_generator.generate_image(random_str))
         cv2.imwrite(image_path, image)
