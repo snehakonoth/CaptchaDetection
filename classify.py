@@ -12,6 +12,8 @@ import random
 import argparse
 import tensorflow as tf
 import tensorflow.keras as keras
+import numpy as np
+import tflite_runtime.interpreter as tflite
 
 def decode(characters, y):
     y = numpy.argmax(numpy.array(y), axis=2)[:,0]
@@ -60,9 +62,16 @@ def main():
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
             tflite_model = converter.convert()
             
+            tf_interpreter = tflite.Interpreter(args.model_name+".tflite")
+            tf_interpreter.allocate_tensors()
+
+            input_tf = tf_interpreter.get_input_details()
+            output_tf = tf_interpreter.get_output_details()
+            
             # Save the model.
-            with open('model.tflite', 'wb') as f:
+            with open(args.model_name+'.tflite', 'wb') as f:
               f.write(tflite_model)
+
 
             for x in os.listdir(args.captcha_dir):
                 # load image and preprocess it
@@ -83,7 +92,15 @@ def main():
                 decoded_symbol = decoded_symbol.replace('8', ':')
                 decoded_symbol = decoded_symbol.replace('9', '\"')
                 decoded_symbol = decoded_symbol.replace(' ', '')
-                output_file.write(x + "," + decoded_symbol + "\n")
+                #output_file.write(x + "," + decoded_symbol + "\n")
+                
+                tf_interpreter.set_tensor(input_tf[0]['index'],image)
+                tf_interpreter.invoke()
+                prediction = []
+                for output_node in output_tf:
+                    prediction.append(tf_interpreter.get_tensor(output_node['index']))
+                prediction = numpy.reshape(prediction,(len(output_tf),-1))
+                output_file.write(x + "," + decode(captcha_symbols, prediction) + "\n")
                 
                 print('Classified ' + x)
 
