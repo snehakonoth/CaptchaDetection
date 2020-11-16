@@ -71,9 +71,10 @@ def main():
         # Save the model.
         #with open(args.model_name+'.tflite', 'wb') as f:
         #  f.write(tflite_model)
+        files = os.listdir(args.captcha_dir)
+        files = sorted(files)
 
-
-        for x in os.listdir(args.captcha_dir):
+        for x in files:
             # load image and preprocess it
             raw_data = cv2.imread(os.path.join(args.captcha_dir, x))
             rgb_data = cv2.cvtColor(raw_data, cv2.COLOR_BGR2RGB)
