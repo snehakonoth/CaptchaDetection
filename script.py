@@ -1,6 +1,3 @@
-pip3 install virtualenv
-python3 -m venv ~/classify_env
-source ~/classify_env/bin/activate
 pip3 install tflite
 pip3 install open-cv
 pip3 install captcha
